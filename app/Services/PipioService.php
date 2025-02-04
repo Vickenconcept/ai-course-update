@@ -31,7 +31,8 @@ class PipioService
     {
         return Cache::remember('pipio_avatars_raw', $this->cacheDuration, function () {
             try {
-                $response = $this->client->request('GET', "{$this->assetsUrl}/actor", [
+                $response = $this->client->request('GET', "{$this->assetsUrl}/actor?page=0&pageSize=33", [
+                // $response = $this->client->request('GET', "{$this->assetsUrl}/actor", [
                     'headers' => [
                         'Accept' => 'application/json',
                         'Authorization' => $this->apiKey

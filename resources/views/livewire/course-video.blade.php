@@ -1,4 +1,7 @@
 <div x-data="{
+    tab: 'avatar',
+    selectedAvatar: null,
+    selectedVoice: null,
     isGenerating: false,
     checkInterval: null,
 
@@ -15,6 +18,7 @@
             videoUrl
         }) => {
             this.isGenerating = false;
+            this.tab = 'video';
             if (this.checkInterval) {
                 clearInterval(this.checkInterval);
             }
@@ -49,14 +53,32 @@
             <div x-show="isGenerating" style="display: none"
                 class="absolute z-20 left-0 top-0 h-full w-full bg-white bg-opacity-90 flex items-center justify-center">
 
-                <div class="">
-                    <img src="{{ asset('images/moving_ball.gif') }}" alt="" style="opacity: 0.8;">
+                <div>
+                    <div class="">
+                        <img src="{{ asset('images/moving_ball.gif') }}" alt="" style="opacity: 0.8;">
+                    </div>
+
+                    <p class="font-medium" x-data="{
+                        messages: [
+                            'Initializing video generation...',
+                            'Processing your content...',
+                            'Creating video frames...',
+                            'Adding finishing touches...',
+                            'Almost there...'
+                        ],
+                        currentIndex: 0,
+                        intervalId: null
+                    }" x-init="intervalId = setInterval(() => {
+                        currentIndex = (currentIndex + 1) % messages.length;
+                    }, 4000);
+                    
+                    Livewire.on('video-generation-complete-{{ $lesson->id }}', ({ videoUrl }) => {
+                        clearInterval(intervalId);
+                    });" x-text="messages[currentIndex]"></p>
                 </div>
             </div>
             <div class="p-2 h-96 overflow-y-auto">
-                <div x-data="{ tab: 'avatar', selectedAvatar: null, selectedVoice: null }" class="">
-
-
+                <div class="">
                     <div>
                         @error('video')
                             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
@@ -70,24 +92,23 @@
                         <div class="flex justify-between items-center">
                             <h3 class="text-xl font-medium mb-3 pb-2 border-b ">Select Avatar</h3>
                             <div class="flex justify-end space-x-2">
-                                <button type="button" @click="tab = 'voice'"
-                                    :disabled="selectedAvatar === null"
+                                <button type="button" @click="tab = 'voice'" :disabled="selectedAvatar === null"
                                     :class="{
-                                        'bg-blue-500': selectedAvatar !==
+                                        'bg-slate-900': selectedAvatar !==
                                             null,
                                         'bg-gray-400 cursor-not-allowed': selectedAvatar === null
                                     }"
                                     class="text-white px-4 py-2 rounded-md">Next</button>
                                 <button type="button" @click="tab = 'video'"
-                                    class="bg-blue-500 text-white px-4 py-2 rounded-md">Response</button>
+                                    class="bg-slate-900 text-white px-4 py-2 rounded-md">Response</button>
                             </div>
 
                         </div>
                         <h3 class="text-lg font-medium text-gray-900 mb-2">Select Avatar</h3>
                         <div class="grid grid-cols-4 gap-4">
-                            <template x-for="avatar in $wire.avatars" :key="avatar.id">
-                                <div class="cursor-pointer p-2 rounded-lg transition-all duration-200"
-                                    :class="{ 'ring-2 ring-blue-500 bg-blue-50': selectedAvatar === avatar.id }"
+                            <template x-for="(avatar, index) in $wire.avatars" :key="avatar.id">
+                                <div x-show="index > 0" class="cursor-pointer p-2 rounded-lg transition-all duration-200"
+                                    :class="{ 'ring-2 ring-slate-900 bg-slate-50': selectedAvatar === avatar.id }"
                                     @click="selectedAvatar = avatar.id; $wire.selectAvatar(avatar.id)">
                                     <img :src="avatar.image_url ? avatar.image_url : 'https://placehold.co/60x60'"
                                         :alt="avatar.name" class="w-full h-auto rounded-lg">
@@ -103,26 +124,25 @@
                             <h3 class="text-xl font-medium mb-3 pb-2 border-b ">Select Vioce</h3>
                             <div class="flex justify-end space-x-2">
                                 <button type="button" @click="tab = 'avatar'; $wire.selectAvatar(null)"
-                                    class="bg-blue-500 text-white px-4 py-2 rounded-md">Prev</button>
+                                    class="bg-slate-900 text-white px-4 py-2 rounded-md">Prev</button>
 
 
-                                <button type="button" @click="tab = 'script'"
-                                    :disabled="selectedVoice === null"
+                                <button type="button" @click="tab = 'script'" :disabled="selectedVoice === null"
                                     :class="{
-                                        'bg-blue-500': selectedVoice !==
+                                        'bg-slate-900': selectedVoice !==
                                             null,
                                         'bg-gray-400 cursor-not-allowed': selectedVoice === null
                                     }"
                                     class="text-white px-4 py-2 rounded-md">Next</button>
                                 <button type="button" @click="tab = 'video'"
-                                    class="bg-blue-500 text-white px-4 py-2 rounded-md">Response</button>
+                                    class="bg-slate-900 text-white px-4 py-2 rounded-md">Response</button>
                             </div>
                         </div>
                         <h3 class="text-lg font-medium text-gray-900 mb-2">Select Voice</h3>
                         <div class="grid grid-cols-3 gap-4">
                             <template x-for="voice in $wire.voices" :key="voice.id">
                                 <div class="cursor-pointer p-3 border rounded-lg transition-all duration-200 bg-gray-50"
-                                    :class="{ 'ring-2 ring-blue-500 bg-blue-50': selectedVoice === voice.id }"
+                                    :class="{ 'ring-2 ring-slate-900 bg-slate-50': selectedVoice === voice.id }"
                                     @click="selectedVoice = voice.id; $wire.selectVoice(voice.id)">
                                     <div class="flex items-center space-x-2">
                                         <div class="flex-shrink-0">
@@ -139,9 +159,9 @@
                                     </div>
                                     <div x-data="{ isPlaying: false }" class="mt-2">
                                         <button
-                                            class="w-full px-3 py-1 text-sm text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            class="w-full px-3 py-1 text-sm text-[#39ac73] border border-[#39ac73] rounded-md hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                             @click.stop="$wire.previewVoice(voice.id)">
-                                            <span>Preview</span>
+                                            <span>Response</span>
                                         </button>
 
                                     </div>
@@ -157,17 +177,17 @@
                             <div class="flex justify-end space-x-2">
 
                                 <button type="button" @click="tab = 'voice'; $wire.selectVoice(null)"
-                                    class="bg-blue-500 text-white px-4 py-2 rounded-md">Prev</button>
-                                <button type="button" class="bg-blue-500 text-white px-4 py-2 rounded-md" 
-                                    wire:click="generateVideo"
-                                    :disabled="!$wire.content?.trim()"
+                                    class="bg-slate-900 text-white px-4 py-2 rounded-md">Prev</button>
+                                <button type="button" class="bg-slate-900 text-white px-4 py-2 rounded-md"
+                                    wire:click="generateVideo" :disabled="!$wire.content?.trim()"
                                     :class="{ 'opacity-50 cursor-not-allowed': !$wire.content?.trim() }">
-                                    Generate
+                                    <span wire:loading.remove wire:target="generateVideo">Generate</span>
+                                    <span wire:loading wire:target="generateVideo">Loading..</span>
                                 </button>
 
-                               
+
                                 <button type="button" @click="tab = 'video'"
-                                    class="bg-blue-500 text-white px-4 py-2 rounded-md">Preview</button>
+                                    class="bg-slate-900 text-white px-4 py-2 rounded-md">Response</button>
                             </div>
 
                         </div>
@@ -179,9 +199,9 @@
                             <h3 class="text-xl font-medium mb-3 pb-2 border-b ">Review</h3>
                             <div class="flex justify-end space-x-2">
                                 <button type="button" @click="tab = 'script'"
-                                    class="bg-blue-500 text-white px-4 py-2 rounded-md">Prev</button>
+                                    class="bg-slate-900 text-white px-4 py-2 rounded-md">Prev</button>
                                 <button type="button" @click="tab = 'video'"
-                                    class="bg-blue-500 text-white px-4 py-2 rounded-md">Preview</button>
+                                    class="bg-slate-900 text-white px-4 py-2 rounded-md">Response</button>
 
                             </div>
                         </div>
